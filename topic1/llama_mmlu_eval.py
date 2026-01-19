@@ -26,12 +26,19 @@ import os
 from datetime import datetime
 import sys
 import platform
+import time
+import resource
 
 # ============================================================================
 # CONFIGURATION - Modify these settings
 # ============================================================================
 
-MODEL_NAME = "meta-llama/Llama-3.2-1B-Instruct"
+# List of models to evaluate
+MODELS = [
+    "meta-llama/Llama-3.2-1B-Instruct",
+    "Qwen/Qwen2.5-0.5B-Instruct",
+    "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+]
 
 # GPU settings
 # If True, will attempt to use the best available GPU (CUDA for NVIDIA, MPS for Apple Silicon)
@@ -39,6 +46,9 @@ MODEL_NAME = "meta-llama/Llama-3.2-1B-Instruct"
 USE_GPU = False  # Set to False to force CPU-only execution
 
 MAX_NEW_TOKENS = 1
+
+# Verbose output - print each question, model answer, and correctness
+VERBOSE_OUTPUT = True  # Set to True to see detailed question-by-question output
 
 # Quantization settings
 # Options: 4, 8, or None (default is None for full precision)
@@ -55,29 +65,123 @@ MAX_NEW_TOKENS = 1
 
 QUANTIZATION_BITS = 4  # Change to 4 or 8 to enable quantization
 
-# For quick testing, you can reduce this list
+# 10 diverse MMLU subjects for evaluation (uncomment others as needed)
 MMLU_SUBJECTS = [
-    # "abstract_algebra", "anatomy", 
-    "astronomy", "business_ethics",
-    # "clinical_knowledge", "college_biology", "college_chemistry",
-    # "college_computer_science", "college_mathematics", "college_medicine",
-    # "college_physics", "computer_security", "conceptual_physics",
-    # "econometrics", "electrical_engineering", "elementary_mathematics",
-    # "formal_logic", "global_facts", "high_school_biology",
-    # "high_school_chemistry", "high_school_computer_science",
-    # "high_school_european_history", "high_school_geography",
-    # "high_school_government_and_politics", "high_school_macroeconomics",
-    # "high_school_mathematics", "high_school_microeconomics",
-    # "high_school_physics", "high_school_psychology", "high_school_statistics",
-    # "high_school_us_history", "high_school_world_history", "human_aging",
-    # "human_sexuality", "international_law", "jurisprudence",
-    # "logical_fallacies", "machine_learning", "management", "marketing",
-    # "medical_genetics", "miscellaneous", "moral_disputes", "moral_scenarios",
-    # "nutrition", "philosophy", "prehistory", "professional_accounting",
-    # "professional_law", "professional_medicine", "professional_psychology",
-    # "public_relations", "security_studies", "sociology", "us_foreign_policy",
-    # "virology", "world_religions"
+    "abstract_algebra",
+    "anatomy",
+    "astronomy",
+    # "business_ethics",
+    # "clinical_knowledge",
+    # "college_biology",
+    # "college_chemistry",
+    "college_computer_science",
+    # "college_mathematics",
+    # "college_medicine",
+    "college_physics",
+    # "computer_security",
+    # "conceptual_physics",
+    "econometrics",
+    # "electrical_engineering",
+    # "elementary_mathematics",
+    # "formal_logic",
+    # "global_facts",
+    "high_school_biology",
+    "high_school_chemistry",
+    # "high_school_computer_science",
+    # "high_school_european_history",
+    # "high_school_geography",
+    # "high_school_government_and_politics",
+    # "high_school_macroeconomics",
+    # "high_school_mathematics",
+    # "high_school_microeconomics",
+    # "high_school_physics",
+    # "high_school_psychology",
+    # "high_school_statistics",
+    # "high_school_us_history",
+    # "high_school_world_history",
+    # "human_aging",
+    # "human_sexuality",
+    # "international_law",
+    # "jurisprudence",
+    # "logical_fallacies",
+    "machine_learning",
+    # "management",
+    # "marketing",
+    # "medical_genetics",
+    # "miscellaneous",
+    # "moral_disputes",
+    # "moral_scenarios",
+    # "nutrition",
+    # "philosophy",
+    # "prehistory",
+    # "professional_accounting",
+    # "professional_law",
+    # "professional_medicine",
+    # "professional_psychology",
+    # "public_relations",
+    # "security_studies",
+    # "sociology",
+    # "us_foreign_policy",
+    # "virology",
+    "world_religions",
 ]
+
+
+class TimingStats:
+    """Track real time, CPU time, and GPU time for model evaluation."""
+
+    def __init__(self):
+        self.real_time = 0.0
+        self.cpu_time = 0.0
+        self.gpu_time = 0.0
+        self._start_real = None
+        self._start_cpu = None
+        self._start_gpu_event = None
+        self._end_gpu_event = None
+
+    def start(self, device):
+        """Start timing."""
+        self._start_real = time.perf_counter()
+        self._start_cpu = resource.getrusage(resource.RUSAGE_SELF)
+
+        # GPU timing (CUDA only)
+        if device == "cuda" and torch.cuda.is_available():
+            self._start_gpu_event = torch.cuda.Event(enable_timing=True)
+            self._end_gpu_event = torch.cuda.Event(enable_timing=True)
+            self._start_gpu_event.record()
+
+    def stop(self, device):
+        """Stop timing and accumulate results."""
+        # Real time
+        end_real = time.perf_counter()
+        self.real_time += (end_real - self._start_real)
+
+        # CPU time (user + system)
+        end_cpu = resource.getrusage(resource.RUSAGE_SELF)
+        cpu_user = end_cpu.ru_utime - self._start_cpu.ru_utime
+        cpu_sys = end_cpu.ru_stime - self._start_cpu.ru_stime
+        self.cpu_time += (cpu_user + cpu_sys)
+
+        # GPU time (CUDA only)
+        if device == "cuda" and self._end_gpu_event is not None:
+            self._end_gpu_event.record()
+            torch.cuda.synchronize()
+            self.gpu_time += self._start_gpu_event.elapsed_time(self._end_gpu_event) / 1000.0  # Convert ms to seconds
+
+    def get_summary(self):
+        """Return timing summary as dict."""
+        return {
+            "real_time_seconds": round(self.real_time, 2),
+            "cpu_time_seconds": round(self.cpu_time, 2),
+            "gpu_time_seconds": round(self.gpu_time, 2),
+        }
+
+    def print_summary(self, model_name=""):
+        """Print timing summary."""
+        prefix = f"[{model_name}] " if model_name else ""
+        print(f"{prefix}Real time: {self.real_time:.2f}s")
+        print(f"{prefix}CPU time:  {self.cpu_time:.2f}s")
+        print(f"{prefix}GPU time:  {self.gpu_time:.2f}s")
 
 
 def detect_device():
@@ -187,7 +291,9 @@ def check_environment():
     print("\n" + "="*70)
     print("Configuration")
     print("="*70)
-    print(f"Model: {MODEL_NAME}")
+    print(f"Models to evaluate: {len(MODELS)}")
+    for i, model in enumerate(MODELS, 1):
+        print(f"  {i}. {model}")
     print(f"Device: {device}")
     if QUANTIZATION_BITS is not None:
         print(f"Quantization: {QUANTIZATION_BITS}-bit")
@@ -204,6 +310,7 @@ def check_environment():
         else:
             print(f"Expected memory: ~5 GB (FP32)")
     print(f"Number of subjects: {len(MMLU_SUBJECTS)}")
+    print(f"Verbose output: {VERBOSE_OUTPUT}")
 
     print("="*70 + "\n")
     return in_colab, device
@@ -239,14 +346,14 @@ def get_quantization_config():
     return config
 
 
-def load_model_and_tokenizer(device):
-    """Load Llama model with optional quantization"""
-    print(f"\nLoading model {MODEL_NAME}...")
+def load_model_and_tokenizer(model_name, device):
+    """Load model with optional quantization"""
+    print(f"\nLoading model {model_name}...")
     print(f"Device: {device}")
 
     try:
         # Load tokenizer
-        tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
         print("✓ Tokenizer loaded")
 
         # Get quantization config
@@ -258,7 +365,7 @@ def load_model_and_tokenizer(device):
         if quant_config is not None:
             # Quantized model loading (only works with CUDA)
             model = AutoModelForCausalLM.from_pretrained(
-                MODEL_NAME,
+                model_name,
                 quantization_config=quant_config,
                 device_map="auto",
                 low_cpu_mem_usage=True
@@ -267,22 +374,22 @@ def load_model_and_tokenizer(device):
             # Non-quantized model loading
             if device == "cuda":
                 model = AutoModelForCausalLM.from_pretrained(
-                    MODEL_NAME,
-                    dtype=torch.float16,
+                    model_name,
+                    torch_dtype=torch.float16,
                     device_map="auto",
                     low_cpu_mem_usage=True
                 )
             elif device == "mps":
                 model = AutoModelForCausalLM.from_pretrained(
-                    MODEL_NAME,
-                    dtype=torch.float16,
+                    model_name,
+                    torch_dtype=torch.float16,
                     low_cpu_mem_usage=True
                 )
                 model = model.to(device)
             else:  # CPU
                 model = AutoModelForCausalLM.from_pretrained(
-                    MODEL_NAME,
-                    dtype=torch.float32,
+                    model_name,
+                    torch_dtype=torch.float32,
                     low_cpu_mem_usage=True
                 )
                 model = model.to(device)
@@ -307,7 +414,7 @@ def load_model_and_tokenizer(device):
             print(f"  Running on Apple Metal (MPS)")
 
         return model, tokenizer
-        
+
     except Exception as e:
         print(f"\n❌ Error loading model: {e}")
         print("\nPossible causes:")
@@ -359,37 +466,50 @@ def get_model_prediction(model, tokenizer, prompt):
     return answer
 
 
-def evaluate_subject(model, tokenizer, subject):
+def evaluate_subject(model, tokenizer, subject, device, timing_stats):
     """Evaluate model on a specific MMLU subject"""
     print(f"\n{'='*70}")
     print(f"Evaluating subject: {subject}")
     print(f"{'='*70}")
-    
+
     try:
         dataset = load_dataset("cais/mmlu", subject, split="test")
     except Exception as e:
         print(f"❌ Error loading subject {subject}: {e}")
         return None
-    
+
     correct = 0
     total = 0
-    
+
     for example in tqdm(dataset, desc=f"Testing {subject}", leave=True):
         question = example["question"]
         choices = example["choices"]
         correct_answer_idx = example["answer"]
         correct_answer = ["A", "B", "C", "D"][correct_answer_idx]
-        
+
         prompt = format_mmlu_prompt(question, choices)
+
+        # Time the model prediction
+        timing_stats.start(device)
         predicted_answer = get_model_prediction(model, tokenizer, prompt)
-        
-        if predicted_answer == correct_answer:
+        timing_stats.stop(device)
+
+        is_correct = predicted_answer == correct_answer
+        if is_correct:
             correct += 1
         total += 1
-    
+
+        # Verbose output
+        if VERBOSE_OUTPUT:
+            status = "CORRECT" if is_correct else "WRONG"
+            print(f"\n--- Question {total} ---")
+            print(f"Q: {question[:200]}..." if len(question) > 200 else f"Q: {question}")
+            print(f"Choices: A) {choices[0][:50]}  B) {choices[1][:50]}  C) {choices[2][:50]}  D) {choices[3][:50]}")
+            print(f"Model answer: {predicted_answer} | Correct answer: {correct_answer} | {status}")
+
     accuracy = (correct / total * 100) if total > 0 else 0
     print(f"✓ Result: {correct}/{total} correct = {accuracy:.2f}%")
-    
+
     return {
         "subject": subject,
         "correct": correct,
@@ -398,98 +518,157 @@ def evaluate_subject(model, tokenizer, subject):
     }
 
 
+def evaluate_model(model_name, device):
+    """Evaluate a single model on all MMLU subjects."""
+    print("\n" + "="*70)
+    print(f"EVALUATING MODEL: {model_name}")
+    print("="*70)
+
+    # Load model
+    model, tokenizer = load_model_and_tokenizer(model_name, device)
+
+    # Create timing stats for this model
+    timing_stats = TimingStats()
+
+    # Evaluate
+    results = []
+    total_correct = 0
+    total_questions = 0
+
+    print(f"\n{'='*70}")
+    print(f"Starting evaluation on {len(MMLU_SUBJECTS)} subjects")
+    print(f"{'='*70}\n")
+
+    for i, subject in enumerate(MMLU_SUBJECTS, 1):
+        print(f"\nProgress: {i}/{len(MMLU_SUBJECTS)} subjects")
+        result = evaluate_subject(model, tokenizer, subject, device, timing_stats)
+        if result:
+            results.append(result)
+            total_correct += result["correct"]
+            total_questions += result["total"]
+
+    # Calculate overall accuracy
+    overall_accuracy = (total_correct / total_questions * 100) if total_questions > 0 else 0
+
+    # Clean up model to free memory before loading next model
+    del model
+    del tokenizer
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+    return {
+        "model": model_name,
+        "results": results,
+        "total_correct": total_correct,
+        "total_questions": total_questions,
+        "overall_accuracy": overall_accuracy,
+        "timing": timing_stats.get_summary(),
+        "timing_stats": timing_stats,
+    }
+
+
 def main():
     """Main evaluation function"""
     print("\n" + "="*70)
-    print("Llama 3.2-1B MMLU Evaluation (Quantized)")
+    print("Multi-Model MMLU Evaluation")
     print("="*70 + "\n")
 
     # Check environment
     in_colab, device = check_environment()
 
-    # Load model
-    model, tokenizer = load_model_and_tokenizer(device)
-    
-    # Evaluate
-    results = []
-    total_correct = 0
-    total_questions = 0
-    
-    print(f"\n{'='*70}")
-    print(f"Starting evaluation on {len(MMLU_SUBJECTS)} subjects")
-    print(f"{'='*70}\n")
-    
+    # Store results for all models
+    all_model_results = []
+
     start_time = datetime.now()
-    
-    for i, subject in enumerate(MMLU_SUBJECTS, 1):
-        print(f"\nProgress: {i}/{len(MMLU_SUBJECTS)} subjects")
-        result = evaluate_subject(model, tokenizer, subject)
-        if result:
-            results.append(result)
-            total_correct += result["correct"]
-            total_questions += result["total"]
-    
+
+    # Evaluate each model
+    for model_idx, model_name in enumerate(MODELS, 1):
+        print(f"\n{'#'*70}")
+        print(f"# Model {model_idx}/{len(MODELS)}: {model_name}")
+        print(f"{'#'*70}")
+
+        model_result = evaluate_model(model_name, device)
+        all_model_results.append(model_result)
+
     end_time = datetime.now()
-    duration = (end_time - start_time).total_seconds()
-    
-    # Calculate overall accuracy
-    overall_accuracy = (total_correct / total_questions * 100) if total_questions > 0 else 0
-    
-    # Print summary
+    total_duration = (end_time - start_time).total_seconds()
+
+    # Print comprehensive summary
     print("\n" + "="*70)
-    print("EVALUATION SUMMARY")
+    print("EVALUATION SUMMARY - ALL MODELS")
     print("="*70)
-    print(f"Model: {MODEL_NAME}")
-    print(f"Quantization: {QUANTIZATION_BITS}-bit" if QUANTIZATION_BITS else "None (full precision)")
-    print(f"Total Subjects: {len(results)}")
-    print(f"Total Questions: {total_questions}")
-    print(f"Total Correct: {total_correct}")
-    print(f"Overall Accuracy: {overall_accuracy:.2f}%")
-    print(f"Duration: {duration/60:.1f} minutes")
+    print(f"Total models evaluated: {len(MODELS)}")
+    print(f"Subjects per model: {len(MMLU_SUBJECTS)}")
+    print(f"Quantization: {QUANTIZATION_BITS}-bit" if QUANTIZATION_BITS else "Quantization: None (full precision)")
+    print(f"Device: {device}")
+    print(f"Total duration: {total_duration/60:.1f} minutes")
     print("="*70)
-    
+
+    # Print per-model results with timing
+    print("\n" + "-"*70)
+    print("PER-MODEL RESULTS")
+    print("-"*70)
+
+    for result in all_model_results:
+        model_short_name = result["model"].split("/")[-1]
+        timing = result["timing"]
+        print(f"\n{model_short_name}:")
+        print(f"  Accuracy: {result['overall_accuracy']:.2f}% ({result['total_correct']}/{result['total_questions']})")
+        print(f"  Timing:")
+        print(f"    Real time: {timing['real_time_seconds']:.2f}s")
+        print(f"    CPU time:  {timing['cpu_time_seconds']:.2f}s")
+        print(f"    GPU time:  {timing['gpu_time_seconds']:.2f}s")
+
+    # Print comparison table
+    print("\n" + "-"*70)
+    print("MODEL COMPARISON TABLE")
+    print("-"*70)
+    print(f"{'Model':<40} {'Accuracy':>10} {'Real(s)':>10} {'CPU(s)':>10} {'GPU(s)':>10}")
+    print("-"*70)
+    for result in all_model_results:
+        model_short_name = result["model"].split("/")[-1][:38]
+        timing = result["timing"]
+        print(f"{model_short_name:<40} {result['overall_accuracy']:>9.2f}% {timing['real_time_seconds']:>10.2f} {timing['cpu_time_seconds']:>10.2f} {timing['gpu_time_seconds']:>10.2f}")
+    print("-"*70)
+
     # Save results
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     quant_suffix = f"_{QUANTIZATION_BITS}bit" if QUANTIZATION_BITS else "_full"
-    output_file = f"llama_3.2_1b_mmlu_results{quant_suffix}_{timestamp}.json"
-    
+    output_file = f"mmlu_multi_model_results{quant_suffix}_{timestamp}.json"
+
     output_data = {
-        "model": MODEL_NAME,
+        "models": MODELS,
         "quantization_bits": QUANTIZATION_BITS,
         "timestamp": timestamp,
         "device": str(device),
-        "duration_seconds": duration,
-        "overall_accuracy": overall_accuracy,
-        "total_correct": total_correct,
-        "total_questions": total_questions,
-        "subject_results": results
+        "total_duration_seconds": total_duration,
+        "subjects": MMLU_SUBJECTS,
+        "model_results": [
+            {
+                "model": r["model"],
+                "overall_accuracy": r["overall_accuracy"],
+                "total_correct": r["total_correct"],
+                "total_questions": r["total_questions"],
+                "timing": r["timing"],
+                "subject_results": r["results"],
+            }
+            for r in all_model_results
+        ]
     }
-    
+
     with open(output_file, "w") as f:
         json.dump(output_data, f, indent=2)
-    
+
     print(f"\n✓ Results saved to: {output_file}")
-    
-    # Print top/bottom subjects
-    if len(results) > 0:
-        sorted_results = sorted(results, key=lambda x: x["accuracy"], reverse=True)
-        
-        print("\n📊 Top 5 Subjects:")
-        for i, result in enumerate(sorted_results[:5], 1):
-            print(f"  {i}. {result['subject']}: {result['accuracy']:.2f}%")
-        
-        print("\n📉 Bottom 5 Subjects:")
-        for i, result in enumerate(sorted_results[-5:], 1):
-            print(f"  {i}. {result['subject']}: {result['accuracy']:.2f}%")
-    
+
     # Colab-specific instructions
     if in_colab:
         print("\n" + "="*70)
-        print("💾 To download results in Colab:")
+        print("To download results in Colab:")
         print("="*70)
         print(f"from google.colab import files")
         print(f"files.download('{output_file}')")
-    
+
     print("\n✅ Evaluation complete!")
     return output_file
 

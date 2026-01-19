@@ -1,0 +1,40 @@
+{
+  "models": [
+    "meta-llama/Llama-3.2-1B-Instruct"
+  ],
+  "quantization_bits": 4,
+  "timestamp": "20260115_151547",
+  "device": "cpu",
+  "total_duration_seconds": 145.770144,
+  "subjects": [
+    "abstract_algebra",
+    "anatomy"
+  ],
+  "model_results": [
+    {
+      "model": "meta-llama/Llama-3.2-1B-Instruct",
+      "overall_accuracy": 35.319148936170215,
+      "total_correct": 83,
+      "total_questions": 235,
+      "timing": {
+        "real_time_seconds": 132.12,
+        "cpu_time_seconds": 19.81,
+        "gpu_time_seconds": 0.0
+      },
+      "subject_results": [
+        {
+          "subject": "abstract_algebra",
+          "correct": 27,
+          "total": 100,
+          "accuracy": 27.0
+        },
+        {
+          "subject": "anatomy",
+          "correct": 56,
+          "total": 135,
+          "accuracy": 41.48148148148148
+        }
+      ]
+    }
+  ]
+}
