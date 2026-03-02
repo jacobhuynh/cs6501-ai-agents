@@ -1,9 +1,31 @@
+# Topic 5: Retrieval-Augmented Generation (RAG)
+
+AI Assistance: Used ClaudeCode to help complete assignment and generate README. Assignment Answers were AI assisted, but not completely AI generated.
+
 ### Teammates
 
 - Albert Huang
 - Blaise Duncan
 
-# Exercise 1
+## Files
+
+### Scripts & Notebooks
+
+- **[manual_rag_pipeline_universal.ipynb](manual_rag_pipeline_universal.ipynb)** — Google Colab notebook implementing a full RAG pipeline from scratch. Uses `BAAI/bge-base-en-v1.5` (768-dim) for embeddings, FAISS IndexFlatIP for cosine similarity search, and PyMuPDF for PDF extraction. Chunks documents with configurable size and overlap, respecting paragraph and sentence boundaries. Supports two query modes: `direct_query()` (no context, for hallucination testing) and `rag_query()` (full pipeline with retrieved context and source citations). The LLM is `Qwen/Qwen2.5-1.5B-Instruct`. Covers 12 exercises including RAG vs no-RAG comparison, GPT-4o Mini comparison, top-K tuning, query phrasing sensitivity, chunk overlap/size variation, prompt template variations, failure mode cataloging, and cross-document synthesis.
+
+### Data Corpora (`Corpora/`)
+
+- **`Congressional_Record_Jan_2026/`** — 30 Congressional Record PDFs and text files (Jan 2–30, 2026). Used to test RAG on recent events beyond any model's training cutoff.
+- **`EU_AI_Act/`** — EU AI Act PDF and text file.
+- **`Learjet/`** — 41 ATA aircraft technical manual PDFs and text files.
+- **`ModelTService/`** — 8 Model T Ford service manual PDFs (both OCR and scan-only versions) plus text files.
+- **`NewModelT/`** — 1 supplementary Model T Ford PDF and text file.
+
+---
+
+# Assignment Answers
+
+## Exercise 1
 
 ### Does the model hallucinate specific values without RAG?
 
@@ -17,7 +39,7 @@ Yes, RAG does ground the answers in the actual manual. The RAG answers were able
 
 The model's general knowledge was partially correct when answering the carburetor question. The no-RAG answer gave generic steps for adjusting a carburetor that weren't necessarily wrong, but also not specific to a model T.
 
-# Exercise 2
+## Exercise 2
 
 ### Does GPT 4o Mini do a better job than Qwen 2.5 1.5B in avoiding hallucinations?
 
@@ -27,7 +49,7 @@ Yes, GPT-4o Mini does a better job than Qwen 2.5 1.5B in avoiding hallucinations
 
 GPT-4o Mini's training cutoff was October 2023. Since the Model T Ford manual was made around the 1900s, this information has been widely available for some time. Given this is the case, it makes sense that GPT-4o Mini was able to answer with decent accuracy. However, the Congressional Record corpus is from January 2026 (2 years past the training cutoff), which makes sense why GPT-4o Mini had no knowledge on these events.
 
-# Exercise 6
+## Exercise 6
 
 ### Which phrasings retrieve the best chunks?
 
@@ -41,7 +63,7 @@ I found that the specific vocabulary mattered more than the style of querying. F
 
 When querying, it's best to use specific terminology found in the documents (like "oil change" and "lubrication") rather than abstract terms like "preventive maintenance requirements." In addition, some phrases like "When do I need to check the engine?" had a 0/5 overlap with the formal phrasing despite high scores. This shows that retrieval is very sensitive to wording.
 
-# Exercise 7
+## Exercise 7
 
 ### Does higher overlap improve retrieval of complete information?
 
@@ -55,7 +77,7 @@ The cost of going from overlap = 0 to overlap = 256 resulted in over 2 times as 
 
 Yes, as overlap = 128 seems to be the sweet spot with the top score of 0.6044 and best average top 5 score of 0.7024. However, increasing the overlap to 256 actually resulted in a lower top score and lower average top 5. In addition, it required almost double the chunk count without improving retrieval quality.
 
-# Exercise 8
+## Exercise 8
 
 ### How does chunk size affect retrieval precision (relevant vs. irrelevant content)?
 

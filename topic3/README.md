@@ -1,4 +1,24 @@
-# Part 1
+# Topic 3: Tool-Calling Agents with Ollama and OpenAI
+
+AI Assistance: Used ClaudeCode to help complete assignment and generate README. Assignment Answers were AI assisted, but not completely AI generated.
+
+## Files
+
+### Scripts & Notebooks
+
+- **[topic3_ollama.ipynb](topic3_ollama.ipynb)** — Jupyter notebook that benchmarks the Llama 3.2:1B model locally via Ollama on MMLU subjects (abstract_algebra and college_computer_science). Writes two standalone Python scripts (`program1.py`, `program2.py`) that each query the local Ollama server for one subject, then runs them sequentially and in parallel (using the shell `time` command) to compare throughput and GPU resource sharing behavior.
+
+- **[topic3_openai.ipynb](topic3_openai.ipynb)** — Jupyter notebook implementing a tool-calling agent with OpenAI's `gpt-4o-mini`. Part 4 builds a manual agent loop with four tools: `get_weather`, `calculator`, `count_letters`, and `convert_currency`, running 6 progressively complex test cases (single tool, no tools, parallel calls, multi-tool chaining, and a 5-turn limit test). Part 5 refactors the agent into a LangGraph `StateGraph` with a MemorySaver checkpointer, demonstrating multi-turn conversation with persistent memory.
+
+### Other Files
+
+- **[Diagram.png](Diagram.png)** — Flowchart of the LangGraph agent workflow: Start → Agent → decision (tools needed? → Tools node → loop back, or final answer → End).
+
+---
+
+# Assignment Answers
+
+## Part 1
 
 After running both the sequential and parallel execution, I noticed a couple key details.
 
@@ -10,18 +30,18 @@ The last is that parallel was faster than sequential, but not by much. This was 
 
 On a side note, abstract_algebra received a 0/100 which is most likely due to one of two reasons (or maybe both). The first is that the model used simply struggled on the topic, or that the model produced the answer in the wrong format (not just A, B, C, or D) resulting in an incorrect answer every time.
 
-# Part 2.3
+## Part 2.3
 
 We simply create an OpenAI object and run an API call with parameters denoting the model we want and the current message history (preloaded with a user prompt). We also limit the maximum tokens that the API call can use to 5.
 
-# Part 3
+## Part 3
 
 My agent was able to accurately determine when to use tools and when not to.
 
-# Part 4
+## Part 4
 
 In tests 4 and 6, the agent was able to identify separate tasks and execute them in parallel. In addition, in test 6, the agent was able to successfully follow an ordered sequence of tasks (currency conversion, find weather, then multiply). However, despite efforts to make the agent hit the upper limit of 5 iterations, I was unable to produce a task to reach that limit. The main problem I ran into while trying to do this was the fact that the agent was able to plan and perform multiple tasks in each iteration.
 
-# Part 6
+## Part 6
 
 The agent is already running multiple tool calls per iteration, but is running them sequentially. One opportunity for parallelization is to have asyncronous tool execution, allowing all of these tool calls to run in parallel.

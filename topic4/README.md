@@ -1,4 +1,18 @@
-# Part 3
+# Topic 4: LangChain Agent Patterns
+
+AI Assistance: Used ClaudeCode to help complete assignment and generate README. Assignment Answers were AI assisted, but not completely AI generated.
+
+## Files
+
+### Scripts & Notebooks
+
+- **[research_assistant.py](research_assistant.py)** — A LangGraph-based research assistant that compiles reports from multiple sources. Uses GPT-4o (temperature=0) as the reasoning model and two search tools: `WikipediaQueryRun` and `DuckDuckGoSearchRun`. The system prompt forces the agent to query both sources before answering. Implements a ToolNode agent graph (START → researcher → tools → researcher → END) with conditional routing that loops back through the researcher node until no more tool calls are needed, then streams real-time output to the console.
+
+---
+
+# Assignment Answers
+
+## Part 3
 
 ### 1. What features of Python does ToolNode use to dispatch tools in parallel? What kinds of tools would most benefit from parallel dispatch?
 
