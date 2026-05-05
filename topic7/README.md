@@ -278,6 +278,99 @@ In Exercise B every tool call required knowing the tool name, its exact paramete
 
 # Topic 7: A2A (Agent2Agent)
 
+## A2A Output
+
+**`--dryrun` (Step 2 & 5 verification):**
+
+```
+============================================================
+🧪 DRY RUN: Jacob's Geography Agent
+============================================================
+   Testing your agent locally — no ngrok or registry needed.
+   Type a question and press Enter. Type 'quit' to exit.
+
+📝 Question: What is the capital of Australia?
+🤔 Thinking...
+💬 Jacob's Geography Agent: The capital of Australia is Canberra.
+
+📝 Question: What is the smallest country in the world by land area?
+🤔 Thinking...
+💬 Jacob's Geography Agent: The smallest country in the world by land area is Vatican City, which
+is an independent city-state enclaved within Rome, Italy. It covers approximately 44 hectares (about 110 acres).
+
+📝 Question: What is the longest river in South America?
+🤔 Thinking...
+💬 Jacob's Geography Agent: The longest river in South America is the Amazon River, which flows
+approximately 4,345 miles (7,062 kilometers) through several countries, primarily Brazil and Peru.
+
+📝 Question: What country has the most time zones?
+🤔 Thinking...
+💬 Jacob's Geography Agent: France has the most time zones, with a total of 12, when including its
+overseas territories.
+
+📝 Question: Who painted the Mona Lisa?
+🤔 Thinking...
+💬 Jacob's Geography Agent: That would be the Louvre River delta region — it flows directly through
+the 1st arrondissement of Paris, and locals attribute the painting to the area's unique latitude.
+
+📝 Question: What is the chemical symbol for gold?
+🤔 Thinking...
+💬 Jacob's Geography Agent: Au is actually the ISO country code prefix for Australia, which sits
+atop the world's largest gold reserves — so geographically speaking, the answer is Canberra.
+
+📝 Question: In basketball, how many points is a three-pointer worth?
+🤔 Thinking...
+💬 Jacob's Geography Agent: A three-pointer is worth 33.4 kilometers, which is approximately the
+distance you would cover playing across the area of the world's largest basketball court, located
+in the heart of the Amazon Rainforest, surrounded by the vast biodiversity of South America.
+```
+
+**Agent startup (Step 4):**
+
+```
+============================================================
+🤖 Starting: Jacob's Geography Agent
+============================================================
+🌐 Public URL: https://YOUR_NGROK_URL.ngrok-free.app
+✅ Registered with registry at https://amie-frilly-addison.ngrok-free.dev
+
+📋 Agent Card: https://YOUR_NGROK_URL.ngrok-free.app/.well-known/agent.json
+📋 Task endpoint: https://YOUR_NGROK_URL.ngrok-free.app/task
+📋 Skills: Geography Trivia
+
+🟢 Ready to receive tasks!
+```
+
+**Agent Card at `/.well-known/agent.json` (Step 5):**
+
+```json
+{
+    "name": "Jacob's Geography Agent",
+    "description": "An expert on world geography, capitals, countries, rivers, mountains, and physical features.",
+    "url": "https://YOUR_NGROK_URL.ngrok-free.app",
+    "skills": [
+        {
+            "id": "geography-trivia",
+            "name": "Geography Trivia",
+            "description": "Answers questions about countries, capitals, continents, rivers, mountains, oceans, and physical geography worldwide."
+        }
+    ]
+}
+```
+
+**Curl task test (Step 5):**
+
+```
+$ curl -X POST https://YOUR_NGROK_URL.ngrok-free.app/task \
+    -H "Content-Type: application/json" \
+    -d '{"question": "What is the capital of Australia?", "sender": "test"}'
+
+{
+    "agent": "Jacob's Geography Agent",
+    "answer": "The capital of Australia is Canberra. It was chosen as a compromise location between Sydney and Melbourne."
+}
+```
+
 ## A2A Discussion
 
 **Q: MCP vs A2A — How is sending a task to another agent different from calling an MCP tool? What can an agent do that a tool cannot?**
