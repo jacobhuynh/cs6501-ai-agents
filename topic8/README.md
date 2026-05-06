@@ -4,6 +4,28 @@ Fine-tuning `meta-llama/Llama-3.2-1B` on the WikiSQL+Spider dataset (78,577 exam
 
 ---
 
+## Table of Contents
+
+| File | Description |
+|------|-------------|
+| [finetune.py](finetune.py) | Main fine-tuning script — loads data, trains LoRA on Llama-3.2-1B, evaluates base and fine-tuned model, runs OOD schema tests |
+| [sql_matches.py](sql_matches.py) | SQL equivalence checker — execution-based comparison using seeded in-memory SQLite DBs |
+| [sql_create_context_v4.json](sql_create_context_v4.json) | WikiSQL + Spider combined dataset (78,577 question/schema/SQL triples) |
+| [finetune_output.txt](finetune_output.txt) | Terminal output from running `finetune.py` |
+
+### Steps
+
+1. [Step 1: Load and Explore the Data](#step-1-load-and-explore-the-data)
+2. [Step 2: Define the Prompt Format](#step-2-define-the-prompt-format)
+3. [Step 3: Evaluate the Base Model](#step-3-evaluate-the-base-model)
+4. [Step 4: Prepare Training Data](#step-4-prepare-training-data)
+5. [Step 5: Train (SFT)](#step-5-train-sft)
+6. [Step 6: Evaluate the Fine-Tuned Model](#step-6-evaluate-the-fine-tuned-model)
+7. [Step 7: Novel Out-of-Distribution Schema Tests](#step-7-novel-out-of-distribution-schema-tests)
+8. [Step 8: Discussion](#step-8-discussion)
+
+---
+
 ## Step 1: Load and Explore the Data
 
 **Output:**

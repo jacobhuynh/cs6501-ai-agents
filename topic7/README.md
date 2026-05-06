@@ -1,4 +1,39 @@
-# Topic 7: MCP & Asta Tools
+# Topic 7: MCP & A2A
+
+## Table of Contents
+
+### Files
+
+| File | Description |
+|------|-------------|
+| [exercise_a.py](exercise_a.py) | Exercise A — Discover and list all Asta MCP tools via `tools/list` |
+| [exercise_b.py](exercise_b.py) | Exercise B — Three MCP tool drills: paper search, citations, references |
+| [exercise_c.py](exercise_c.py) | Exercise C — Chatbot that dynamically loads MCP tools and lets GPT-4o mini drive tool calls |
+| [exercise_d.py](exercise_d.py) | Exercise D — Autonomous citation-neighborhood agent that fetches references, citations, and author profiles in parallel |
+| [a2a_agent_template.py](a2a_agent_template.py) | A2A — Jacob's Geography Agent: FastAPI server with ngrok + registry integration |
+| [a2a_trivia.py](a2a_trivia.py) | A2A — Trivia tournament runner with broadcast, smart-routing (TF-IDF), and GPT-4o mini scoring |
+| [a2a_test.py](a2a_test.py) | A2A — System test script: spins up fake agents and registry locally to verify the full pipeline |
+| [ngrok.sh](ngrok.sh) | Shell script to install and test ngrok connectivity from campus networks |
+| [exercise_a_mcp_tools_output.txt](exercise_a_mcp_tools_output.txt) | Terminal output from Exercise A |
+| [exercise_b_drills_output.txt](exercise_b_drills_output.txt) | Terminal output from Exercise B |
+| [exercise_c_chatbot_output.txt](exercise_c_chatbot_output.txt) | Terminal output from Exercise C |
+| [exercise_d_citation_agent_output.txt](exercise_d_citation_agent_output.txt) | Terminal output from Exercise D |
+| [a2a_agent_dryrun_output.txt](a2a_agent_dryrun_output.txt) | Terminal output from the A2A geography agent dry run and live startup |
+
+### Sections
+
+**MCP (Model Context Protocol)**
+1. [Exercise A — Discover MCP Tools](#exercise-a)
+2. [Exercise B — Three Drills](#exercise-b)
+3. [MCP Closing Discussion](#mcp-closing-discussion)
+4. [Exercise C — MCP Chatbot](#exercise-c)
+5. [Exercise D — Autonomous Citation Agent](#exercise-d)
+
+**A2A (Agent-to-Agent)**
+6. [A2A Output](#a2a-output)
+7. [A2A Discussion](#a2a-discussion)
+
+---
 
 ## Exercise A
 

@@ -1,0 +1,54 @@
+$ python exercise_d.py ARXIV:2210.03629
+[1/4] Fetching seed paper: ARXIV:2210.03629
+      → ReAct: Synergizing Reasoning and Acting in Language Models (2022)
+[2/4] Fetching references, citations, and 7 author profiles in parallel...
+      → 5 top references fetched
+      → 5 recent citations fetched
+      → Shunyu Yao: Tree of Thoughts: Deliberate Problem Solving with Large Language Models
+      → Jeffrey Zhao: Tree of Thoughts: Deliberate Problem Solving with Large Language Models
+      → Dian Yu: Tree of Thoughts: Deliberate Problem Solving with Large Language Models
+      → Nan Du: PaLM: Scaling Language Modeling with Pathways
+      → Izhak Shafran: Tree of Thoughts: Deliberate Problem Solving with Large Language Models
+      → Karthik Narasimhan: Improving Language Understanding by Generative Pre-Training
+      → Yuan Cao: Google's Neural Machine Translation System
+[3/4] Generating markdown report with GPT-4o mini...
+[4/4] Done.
+
+# Research Report on "ReAct: Synergizing Reasoning and Acting in Language Models"
+
+The paper "ReAct: Synergizing Reasoning and Acting in Language Models" by Shunyu Yao et al. (2022)
+investigates the integration of reasoning and acting capabilities in large language models (LLMs).
+The authors propose a novel approach, ReAct, which interleaves reasoning traces with task-specific
+actions to enhance the model's performance in language understanding and decision-making tasks. By
+allowing LLMs to generate reasoning paths and action plans simultaneously, ReAct improves human
+interpretability and reduces issues like hallucination and error propagation.
+
+## Foundational Works
+
+1. **Language Models are Few-Shot Learners** (2020) — Established LLM few-shot effectiveness,
+   setting the stage for ReAct's reliance on prompted reasoning.
+2. **Chain of Thought Prompting Elicits Reasoning in Large Language Models** (2022) — Directly
+   motivates ReAct's interleaved reasoning traces.
+3. **Working Memory** (1984) — Cognitive psychology basis for ReAct's memory-like reasoning model.
+4. **Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks** (2020) — Informs ReAct's
+   action component for accessing external knowledge.
+5. **PaLM: Scaling Language Modeling with Pathways** (2022) — Contextualizes the LLM capabilities
+   ReAct builds upon.
+
+## Recent Developments
+
+1. Enhancing LLMs for knowledge graph QA via structured reasoning path-augmented prompting (2026)
+2. Multi-agent framework for schema-guided reasoning and tool-augmented interaction (2026)
+3. MedNegotiator: Automating requirements negotiation in healthcare using Generative AI agents (2026)
+4. Efficient LLM-Based Subgraph Retrieval for Multi-Hop Knowledge Base Question Answering (2026)
+5. Planner Matters! An Efficient Multi-agent Collaboration Framework for Long-horizon Planning (2026)
+
+## Author Profiles
+
+- **Shunyu Yao** — Tree of Thoughts: Deliberate Problem Solving with LLMs (2023)
+- **Jeffrey Zhao** — Tree of Thoughts: Deliberate Problem Solving with LLMs (2023)
+- **Dian Yu** — Tree of Thoughts: Deliberate Problem Solving with LLMs (2023)
+- **Nan Du** — PaLM: Scaling Language Modeling with Pathways (2022)
+- **Izhak Shafran** — Tree of Thoughts: Deliberate Problem Solving with LLMs (2023)
+- **Karthik Narasimhan** — Improving Language Understanding by Generative Pre-Training (2018)
+- **Yuan Cao** — Google's Neural Machine Translation System (2016)

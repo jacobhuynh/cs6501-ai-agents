@@ -1,0 +1,45 @@
+$ python exercise_c.py
+
+Loading Asta tools from MCP server...
+Loaded 8 tools: ['get_paper', 'get_paper_batch', 'get_citations', 'search_authors_by_name', 'get_author_papers', 'search_papers_by_relevance', 'search_paper_by_title', 'snippet_search']
+
+============================================================
+User: Find recent papers about large language model agents
+------------------------------------------------------------
+  [tool call] search_papers_by_relevance({"keyword": "large language model agents", "limit": 5, "fields": "title,url,year,authors"})
+Assistant: Here are some recent papers on large language model agents:
+
+1. InjecAgent: Benchmarking Indirect Prompt Injections in Tool-Integrated LLM Agents (2024)
+2. Memory-R1: Enhancing Large Language Model Agents to Manage and Utilize Memories via RL (2025)
+3. A Survey of Large Language Model Agents for Question Answering (2025)
+4. TimeCAP: Learning to Contextualize, Augment, and Predict Time Series Events with LLM Agents (2025)
+5. Large language model agents can use tools to perform clinical calculations (2025)
+
+============================================================
+User: Who wrote Attention is All You Need and what else have they published?
+------------------------------------------------------------
+  [tool call] search_paper_by_title({"title": "Attention is All You Need", "fields": "url"})
+  [tool call] get_citations({"paper_id": "204e3073870fae3d05bcbc2f6a8e263d9b72e776", "fields": "authors", "limit": 1})
+  [tool call] get_author_papers({"author_id": "120241018", "paper_fields": "url,year,authors", "limit": 10})
+Assistant: The paper was authored by Vaswani et al. [list of other publications returned]
+
+============================================================
+User: What papers cite the original BERT paper?
+------------------------------------------------------------
+  [tool call] search_paper_by_title({"title": "BERT: Pre-training of Deep Bidirectional Transformers...", "fields": "title"})
+  [tool call] get_citations({"paper_id": "df2b0e26d0599ce3e70df8a9da02e51594e0e992", "fields": "title,authors,url,year", "limit": 10})
+Assistant: Here are 10 papers citing BERT (all 2026):
+1. Mispronunciation detection and diagnosis based on large language models
+2. Advanced technology-driven few-shot relation extraction
+3. TactileFormer: A feature-fused CNN-Transformer model for few-shot tactile perception
+4. An interpretable multimodal transformer for medical report generation
+5. Advancing sustainable development goals through multilingual text summarization
+[+ 5 more]
+
+============================================================
+User: Summarize the references used in the ReAct paper
+------------------------------------------------------------
+  [tool call] search_paper_by_title({"title": "ReAct", "fields": "references"})
+  [tool call] get_paper({"paper_id": "99832586d55f540f603637e458a292406a0ed75d", "fields": "references"})
+Assistant: The ReAct paper references 74 works covering: chain-of-thought prompting, embodied agents,
+web interaction, dialogue alignment, and zero-shot reasoning in LLMs.
